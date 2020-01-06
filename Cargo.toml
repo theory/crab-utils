@@ -1,5 +1,5 @@
 [package]
-name = "ripseq"
+name = "seq"
 version = "0.1.0"
 authors = ["David E. Wheeler <david.wheeler@iovation.com>"]
 edition = "2018"
