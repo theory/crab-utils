@@ -1,4 +1,4 @@
-use std::{env, error};
+use std::error;
 type Result<T> = ::std::result::Result<T, Box<dyn error::Error>>;
 
 pub fn run(args: Vec<String>) -> Result<()> {
@@ -23,9 +23,6 @@ fn s2u(arg: &str) -> Result<usize> {
     arg.trim().parse().or(Err(usage().into()))
 }
 
-fn usage() -> String {
-    format!(
-        "Usage: {:?} [-w] [-f format] [-s string] [-t string] [first [incr]] last",
-        env::current_exe().unwrap()
-    )
+fn usage() -> &'static str {
+    "Usage: seq [-w] [-f format] [-s string] [-t string] [first [incr]] last"
 }
