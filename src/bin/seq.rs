@@ -6,8 +6,7 @@ type Result<T> = ::std::result::Result<T, Box<dyn error::Error>>;
 type Sequence = (isize, usize, isize);
 
 fn main() {
-    let args: Vec<String> = env::args().skip(1).collect();
-    if let Err(err) = run(args) {
+    if let Err(err) = run(env::args().skip(1).collect()) {
         eprintln!("{}", err);
         process::exit(2);
     }
