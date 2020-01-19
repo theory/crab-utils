@@ -19,8 +19,11 @@ fn run(argv: Vec<String>) -> Result<()> {
         Ok(m) => m,
         Err(f) => return Err(f.to_string().into()),
     };
-    let seq = getseq(matches.free).or(Err(opts.short_usage("seq")))?;
+    let seq = getseq(&matches.free).or(Err(opts.short_usage("seq")))?;
     emitseq(seq);
+    if let Some(term) = matches.opt_str("t") {
+        print!("{}", term);
+    }
     Ok(())
 }
 
@@ -38,7 +41,7 @@ fn options() -> Options {
     opts
 }
 
-fn getseq(args: Vec<String>) -> Result<Sequence> {
+fn getseq(args: &Vec<String>) -> Result<Sequence> {
     let seq: Sequence = match args.len() {
         1 => (1, 1, args[0].trim().parse()?),
         2 => (args[0].trim().parse()?, 1, args[1].trim().parse()?),
