@@ -21,7 +21,13 @@ fn run(argv: Vec<String>) -> Result<()> {
     };
     let seq = getseq(&matches.free).or(Err(opts.short_usage("seq")))?;
     let sep = matches.opt_str("s").unwrap_or(String::from("\n"));
-    emitseq(seq, &sep);
+    let width = if matches.opt_present("w") {
+        format!("{}", seq.2).len()
+    } else {
+        1
+    };
+
+    emitseq(seq, &sep, width);
     if let Some(term) = matches.opt_str("t") {
         print!("{}", term);
     }
@@ -55,8 +61,8 @@ fn getseq(args: &Vec<String>) -> Result<Sequence> {
     Ok(seq)
 }
 
-fn emitseq(seq: Sequence, sep: &str) {
+fn emitseq(seq: Sequence, sep: &str, width: usize) {
     for num in (seq.0..=seq.2).step_by(seq.1) {
-        print!("{}{}", num, sep);
+        print!("{:0>2$}{}", num, sep, width);
     }
 }
