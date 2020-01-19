@@ -22,7 +22,11 @@ fn run(argv: Vec<String>) -> Result<()> {
     let seq = getseq(&matches.free).or(Err(opts.short_usage("seq")))?;
     let sep = matches.opt_str("s").unwrap_or(String::from("\n"));
     let width = if matches.opt_present("w") {
-        format!("{}", seq.2).len()
+        if seq.0 <= seq.2 {
+            format!("{}", seq.2).len()
+        } else {
+            format!("{}", seq.0).len()
+        }
     } else {
         1
     };
@@ -62,7 +66,14 @@ fn getseq(args: &Vec<String>) -> Result<Sequence> {
 }
 
 fn emitseq(seq: Sequence, sep: &str, width: usize) {
-    for num in (seq.0..=seq.2).step_by(seq.1) {
-        print!("{:0>2$}{}", num, sep, width);
+    println!("{:?}", seq);
+    if seq.0 <= seq.2 {
+        for num in (seq.0..=seq.2).step_by(seq.1) {
+            print!("{:0>2$}{}", num, sep, width);
+        }
+    } else {
+        for num in (seq.2..=seq.0).rev().step_by(seq.1) {
+            print!("{:0>2$}{}", num, sep, width);
+        }
     }
 }
