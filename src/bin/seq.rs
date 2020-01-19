@@ -21,11 +21,7 @@ fn run(argv: Vec<String>) -> Result<()> {
     let seq = getseq(&matches.free).or(Err(opts.short_usage("seq")))?;
     let sep = matches.opt_str("s").unwrap_or(String::from("\n"));
     let width = if matches.opt_present("w") {
-        if seq.0 <= seq.2 {
-            format!("{}", seq.2).len()
-        } else {
-            format!("{}", seq.0).len()
-        }
+        format!("{}", if seq.0 <= seq.2 { seq.2 } else { seq.0 }).len()
     } else {
         1
     };
