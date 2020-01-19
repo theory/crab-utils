@@ -20,7 +20,8 @@ fn run(argv: Vec<String>) -> Result<()> {
         Err(f) => return Err(f.to_string().into()),
     };
     let seq = getseq(&matches.free).or(Err(opts.short_usage("seq")))?;
-    emitseq(seq);
+    let sep = matches.opt_str("s").unwrap_or(String::from("\n"));
+    emitseq(seq, &sep);
     if let Some(term) = matches.opt_str("t") {
         print!("{}", term);
     }
@@ -30,7 +31,6 @@ fn run(argv: Vec<String>) -> Result<()> {
 fn options() -> Options {
     let mut opts = Options::new();
     opts.optflag("w", "", " Equalize the widths of all numbers");
-    opts.optopt("f", "", "Use printf-style FORMAT for each number", "FORMAT");
     opts.optopt("s", "", "Use STRING to separate numbers", "STRING");
     opts.optopt(
         "t",
@@ -55,8 +55,8 @@ fn getseq(args: &Vec<String>) -> Result<Sequence> {
     Ok(seq)
 }
 
-fn emitseq(seq: Sequence) {
+fn emitseq(seq: Sequence, sep: &str) {
     for num in (seq.0..=seq.2).step_by(seq.1) {
-        println!("{}", num);
+        print!("{}{}", num, sep);
     }
 }
