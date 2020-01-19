@@ -66,7 +66,6 @@ fn getseq(args: &Vec<String>) -> Result<Sequence> {
 }
 
 fn emitseq(seq: Sequence, sep: &str, width: usize) {
-    println!("{:?}", seq);
     if seq.0 <= seq.2 {
         for num in (seq.0..=seq.2).step_by(seq.1) {
             print!("{:0>2$}{}", num, sep, width);
