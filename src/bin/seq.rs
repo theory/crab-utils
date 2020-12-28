@@ -18,7 +18,7 @@ fn run(argv: Vec<String>) -> Result<()> {
         Ok(m) => m,
         Err(f) => return Err(f.to_string().into()),
     };
-    let seq = getseq(&matches.free).or(Err(opts.short_usage("seq")))?;
+    let seq = getseq(&matches.free).or(Err(opts.short_usage("seq") + " [first [incr]] last"))?;
     let sep = matches.opt_str("s").unwrap_or(String::from("\n"));
     let width = if matches.opt_present("w") {
         format!("{}", if seq.0 <= seq.2 { seq.2 } else { seq.0 }).len()
@@ -36,12 +36,12 @@ fn run(argv: Vec<String>) -> Result<()> {
 fn options() -> Options {
     let mut opts = Options::new();
     opts.optflag("w", "", " Equalize the widths of all numbers");
-    opts.optopt("s", "", "Use STRING to separate numbers", "STRING");
+    opts.optopt("s", "", "Use STRING to separate numbers", "string");
     opts.optopt(
         "t",
         "",
         "Use STRING to terminate sequence of numbers",
-        "STRING",
+        "string",
     );
     opts
 }
