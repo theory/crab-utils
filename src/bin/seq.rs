@@ -36,11 +36,11 @@ fn run(argv: Vec<String>) -> Result<()> {
 fn options() -> Options {
     let mut opts = Options::new();
     opts.optflag("w", "", " Equalize the widths of all numbers");
-    opts.optopt("s", "", "Use STRING to separate numbers", "string");
+    opts.optopt("s", "", "Use string to separate numbers", "string");
     opts.optopt(
         "t",
         "",
-        "Use STRING to terminate sequence of numbers",
+        "Use string to terminate sequence of numbers",
         "string",
     );
     opts
