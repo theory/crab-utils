@@ -3,7 +3,7 @@ extern crate getopts;
 use getopts::Options;
 
 type Result<T> = ::std::result::Result<T, Box<dyn error::Error>>;
-type Sequence = (isize, usize, isize);
+type Sequence = (f64, f64, f64);
 
 fn main() {
     if let Err(err) = run(env::args().skip(1).collect()) {
@@ -48,8 +48,8 @@ fn options() -> Options {
 
 fn getseq(args: &Vec<String>) -> Result<Sequence> {
     let seq: Sequence = match args.len() {
-        1 => (1, 1, args[0].trim().parse()?),
-        2 => (args[0].trim().parse()?, 1, args[1].trim().parse()?),
+        1 => (1.0, 1.0, args[0].trim().parse()?),
+        2 => (args[0].trim().parse()?, 1.0, args[1].trim().parse()?),
         3 => (
             args[0].trim().parse()?,
             args[1].trim().parse()?,
@@ -61,13 +61,16 @@ fn getseq(args: &Vec<String>) -> Result<Sequence> {
 }
 
 fn emitseq(seq: Sequence, sep: &str, width: usize) {
+    let mut i = seq.0;
     if seq.0 <= seq.2 {
-        for num in (seq.0..=seq.2).step_by(seq.1) {
-            print!("{:0>2$}{}", num, sep, width);
+        while i <= seq.2 {
+            print!("{:0>2$}{}", i, sep, width);
+            i += seq.1;
         }
     } else {
-        for num in (seq.2..=seq.0).rev().step_by(seq.1) {
-            print!("{:0>2$}{}", num, sep, width);
+        while i >= seq.2 {
+            print!("{:0>2$}{}", i, sep, width);
+            i -= seq.1;
         }
     }
 }
