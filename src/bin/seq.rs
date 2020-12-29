@@ -90,7 +90,7 @@ fn emitseq(seq: Sequence, sep: &str, width: usize) {
         while cur >= seq.2 {
             print!("{:0>1$.2$}{3}", cur, width, seq.3, sep);
             iter += 1.0;
-            cur = cur - seq.1 * iter;
+            cur = seq.0 - seq.1 * iter;
         }
         if cur > seq.2 {
             print!("{:0>1$.2$}{3}", seq.2, width, seq.3, sep);
