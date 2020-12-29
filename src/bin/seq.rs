@@ -1,9 +1,9 @@
-use std::{env, error, process};
+use std::{env, error, process, str};
 extern crate getopts;
 use getopts::Options;
 
 type Result<T> = ::std::result::Result<T, Box<dyn error::Error>>;
-type Sequence = (f64, f64, f64);
+type Sequence = (f64, f64, f64, usize);
 
 fn main() {
     if let Err(err) = run(env::args().skip(1).collect()) {
@@ -21,7 +21,13 @@ fn run(argv: Vec<String>) -> Result<()> {
     let seq = getseq(&matches.free).or(Err(opts.short_usage("seq") + " [first [incr]] last"))?;
     let sep = matches.opt_str("s").unwrap_or(String::from("\n"));
     let width = if matches.opt_present("w") {
-        format!("{}", if seq.0 <= seq.2 { seq.2 } else { seq.0 }).len()
+        let a = format!("{0:.1$}", seq.0, seq.3);
+        let b = format!("{0:.1$}", seq.2, seq.3);
+        if a.len() >= b.len() {
+            a.len()
+        } else {
+            b.len()
+        }
     } else {
         1
     };
@@ -47,30 +53,47 @@ fn options() -> Options {
 }
 
 fn getseq(args: &Vec<String>) -> Result<Sequence> {
-    let seq: Sequence = match args.len() {
-        1 => (1.0, 1.0, args[0].trim().parse()?),
-        2 => (args[0].trim().parse()?, 1.0, args[1].trim().parse()?),
+    let mut seq: Sequence = match args.len() {
+        1 => (1.0, 1.0, args[0].trim().parse()?, 0),
+        2 => (args[0].trim().parse()?, 1.0, args[1].trim().parse()?, 0),
         3 => (
             args[0].trim().parse()?,
             args[1].trim().parse()?,
             args[2].trim().parse()?,
+            0,
         ),
         _ => return Err("Not enough arguments".into()),
     };
+
+    // Determine precision.
+    for num in args {
+        if let Some(idx) = num.chars().position(|x| x == '.') {
+            if idx > seq.3 {
+                seq.3 = num.len() - (idx + 1);
+            }
+        }
+    }
+
     Ok(seq)
 }
 
 fn emitseq(seq: Sequence, sep: &str, width: usize) {
-    let mut i = seq.0;
+    let mut cur = seq.0;
     if seq.0 <= seq.2 {
-        while i <= seq.2 {
-            print!("{:0>2$}{}", i, sep, width);
-            i += seq.1;
+        while cur <= seq.2 {
+            print!("{:0>1$.2$}{3}", cur, width, seq.3, sep);
+            cur = cur + seq.1;
+        }
+        if cur < seq.2 {
+            print!("{:0>1$.2$}{3}", seq.2, width, seq.3, sep);
         }
     } else {
-        while i >= seq.2 {
-            print!("{:0>2$}{}", i, sep, width);
-            i -= seq.1;
+        while cur >= seq.2 {
+            print!("{:0>1$.2$}{3}", cur, width, seq.3, sep);
+            cur = cur - seq.1;
+        }
+        if cur > seq.2 {
+            print!("{:0>1$.2$}{3}", seq.2, width, seq.3, sep);
         }
     }
 }
