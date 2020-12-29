@@ -22,7 +22,8 @@ mod seq {
             Ok(m) => m,
             Err(f) => return Err(f.to_string().into()),
         };
-        let seq = getseq(&matches.free)?;
+        let seq =
+            getseq(&matches.free).or(Err(opts.short_usage("seq") + " [first [incr]] last"))?;
         let sep = matches.opt_str("s").unwrap_or(String::from("\n"));
         let width = if matches.opt_present("w") {
             cmp::max(
