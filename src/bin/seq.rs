@@ -55,7 +55,7 @@ fn getseq(args: &Vec<String>) -> Result<Sequence> {
         2 => (args[0].trim().parse()?, 1.0, args[1].trim().parse()?, 0),
         3 => (
             args[0].trim().parse()?,
-            args[1].trim().parse()?,
+            (args[1].trim().parse::<f64>()?).abs(),
             args[2].trim().parse()?,
             0,
         ),
