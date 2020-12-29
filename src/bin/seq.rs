@@ -67,7 +67,7 @@ fn getseq(args: &Vec<String>) -> Result<Sequence> {
     for num in args {
         if let Some(idx) = num.chars().position(|x| x == '.') {
             // Keep the greater precision.
-            seq.3 = cmp::max(seq.3, num.len() - (idx + 1));
+            seq.3 = seq.3.max(num.len() - (idx + 1));
         }
     }
 
