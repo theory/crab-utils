@@ -1,7 +1,7 @@
 use std::io::stdout;
 use std::{env, process};
 fn main() {
-    if let Err(err) = seq::run(&stdout(), env::args().skip(1).collect()) {
+    if let Err(err) = seq::run(&mut stdout(), env::args().skip(1).collect()) {
         eprintln!("{}", err);
         process::exit(2);
     }
@@ -16,7 +16,7 @@ mod seq {
     type Result<T> = ::std::result::Result<T, Box<dyn error::Error>>;
     type Sequence = (f64, f64, f64, usize);
 
-    pub fn run(out: impl Write, argv: Vec<String>) -> Result<()> {
+    pub fn run(out: &mut dyn Write, argv: Vec<String>) -> Result<()> {
         let opts = options();
         let matches = match opts.parse(argv) {
             Ok(m) => m,
@@ -77,7 +77,7 @@ mod seq {
     }
 
     fn emitseq(
-        mut out: impl Write,
+        out: &mut dyn Write,
         seq: Sequence,
         sep: &str,
         width: usize,
