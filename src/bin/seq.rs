@@ -22,8 +22,7 @@ mod seq {
             Ok(m) => m,
             Err(f) => return Err(f.to_string().into()),
         };
-        let seq =
-            getseq(&matches.free).or(Err(opts.short_usage("seq") + " [first [incr]] last"))?;
+        let seq = getseq(&matches.free)?;
         let sep = matches.opt_str("s").unwrap_or(String::from("\n"));
         let width = if matches.opt_present("w") {
             cmp::max(
@@ -34,10 +33,7 @@ mod seq {
             1
         };
 
-        emitseq(out, seq, &sep, width).or(Err(opts.short_usage("seq") + " [first [incr]] last"))?;
-        if let Some(term) = matches.opt_str("t") {
-            print!("{}", term);
-        }
+        emitseq(out, seq, &sep, width, matches.opt_str("t"))?;
         Ok(())
     }
 
@@ -79,7 +75,13 @@ mod seq {
         Ok(seq)
     }
 
-    fn emitseq(mut out: impl Write, seq: Sequence, sep: &str, width: usize) -> Result<()> {
+    fn emitseq(
+        mut out: impl Write,
+        seq: Sequence,
+        sep: &str,
+        width: usize,
+        term: Option<String>,
+    ) -> Result<()> {
         let mut cur = seq.0;
         let mut iter = 0.0;
         if seq.0 <= seq.2 {
@@ -100,6 +102,9 @@ mod seq {
             if cur > seq.2 {
                 write!(out, "{:0>1$.2$}{3}", seq.2, width, seq.3, sep)?;
             }
+        }
+        if let Some(term) = term {
+            write!(out, "{}", term)?;
         }
         Ok(())
     }
