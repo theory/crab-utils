@@ -1,12 +1,14 @@
+use std::io::stdout;
 use std::{env, process};
 fn main() {
-    if let Err(err) = seq::run(env::args().skip(1).collect()) {
+    if let Err(err) = seq::run(&stdout(), env::args().skip(1).collect()) {
         eprintln!("{}", err);
         process::exit(2);
     }
 }
 
 mod seq {
+    use std::io::Write;
     use std::{cmp, error, str};
     extern crate getopts;
     use getopts::Options;
@@ -14,7 +16,7 @@ mod seq {
     type Result<T> = ::std::result::Result<T, Box<dyn error::Error>>;
     type Sequence = (f64, f64, f64, usize);
 
-    pub fn run(argv: Vec<String>) -> Result<()> {
+    pub fn run(out: impl Write, argv: Vec<String>) -> Result<()> {
         let opts = options();
         let matches = match opts.parse(argv) {
             Ok(m) => m,
@@ -32,7 +34,7 @@ mod seq {
             1
         };
 
-        emitseq(seq, &sep, width);
+        emitseq(out, seq, &sep, width).or(Err(opts.short_usage("seq") + " [first [incr]] last"))?;
         if let Some(term) = matches.opt_str("t") {
             print!("{}", term);
         }
@@ -77,36 +79,37 @@ mod seq {
         Ok(seq)
     }
 
-    fn emitseq(seq: Sequence, sep: &str, width: usize) {
+    fn emitseq(mut out: impl Write, seq: Sequence, sep: &str, width: usize) -> Result<()> {
         let mut cur = seq.0;
         let mut iter = 0.0;
         if seq.0 <= seq.2 {
             while cur <= seq.2 {
-                print!("{:0>1$.2$}{3}", cur, width, seq.3, sep);
+                write!(out, "{:0>1$.2$}{3}", cur, width, seq.3, sep)?;
                 iter += 1.0;
                 cur = seq.0 + seq.1 * iter;
             }
             if cur < seq.2 {
-                print!("{:0>1$.2$}{3}", seq.2, width, seq.3, sep);
+                write!(out, "{:0>1$.2$}{3}", seq.2, width, seq.3, sep)?;
             }
         } else {
             while cur >= seq.2 {
-                print!("{:0>1$.2$}{3}", cur, width, seq.3, sep);
+                write!(out, "{:0>1$.2$}{3}", cur, width, seq.3, sep)?;
                 iter += 1.0;
                 cur = seq.0 - seq.1 * iter;
             }
             if cur > seq.2 {
-                print!("{:0>1$.2$}{3}", seq.2, width, seq.3, sep);
+                write!(out, "{:0>1$.2$}{3}", seq.2, width, seq.3, sep)?;
             }
         }
+        Ok(())
     }
-}
 
-#[cfg(test)]
-mod tests {
-    // use super::*;
-    #[test]
-    fn exploration() {
-        assert_eq!(2 + 2, 4);
+    #[cfg(test)]
+    mod tests {
+        // use super::*;
+        #[test]
+        fn exploration() {
+            assert_eq!(2 + 2, 4);
+        }
     }
 }
