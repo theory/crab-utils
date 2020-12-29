@@ -76,10 +76,12 @@ fn getseq(args: &Vec<String>) -> Result<Sequence> {
 
 fn emitseq(seq: Sequence, sep: &str, width: usize) {
     let mut cur = seq.0;
+    let mut iter = 0.0;
     if seq.0 <= seq.2 {
         while cur <= seq.2 {
             print!("{:0>1$.2$}{3}", cur, width, seq.3, sep);
-            cur = cur + seq.1;
+            iter += 1.0;
+            cur = seq.0 + seq.1 * iter;
         }
         if cur < seq.2 {
             print!("{:0>1$.2$}{3}", seq.2, width, seq.3, sep);
@@ -87,7 +89,8 @@ fn emitseq(seq: Sequence, sep: &str, width: usize) {
     } else {
         while cur >= seq.2 {
             print!("{:0>1$.2$}{3}", cur, width, seq.3, sep);
-            cur = cur - seq.1;
+            iter += 1.0;
+            cur = cur - seq.1 * iter;
         }
         if cur > seq.2 {
             print!("{:0>1$.2$}{3}", seq.2, width, seq.3, sep);
