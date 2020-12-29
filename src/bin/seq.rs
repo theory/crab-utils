@@ -66,9 +66,8 @@ fn getseq(args: &Vec<String>) -> Result<Sequence> {
     // the sprintf %g format found in other languages.
     for num in args {
         if let Some(idx) = num.chars().position(|x| x == '.') {
-            if idx > seq.3 {
-                seq.3 = num.len() - (idx + 1);
-            }
+            // Keep the greater precision.
+            seq.3 = cmp::max(seq.3, num.len() - (idx + 1));
         }
     }
 
