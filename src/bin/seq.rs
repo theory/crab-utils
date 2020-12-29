@@ -1,4 +1,4 @@
-use std::{env, error, process, str};
+use std::{cmp, env, error, process, str};
 extern crate getopts;
 use getopts::Options;
 
@@ -21,13 +21,10 @@ fn run(argv: Vec<String>) -> Result<()> {
     let seq = getseq(&matches.free).or(Err(opts.short_usage("seq") + " [first [incr]] last"))?;
     let sep = matches.opt_str("s").unwrap_or(String::from("\n"));
     let width = if matches.opt_present("w") {
-        let a = format!("{0:.1$}", seq.0, seq.3);
-        let b = format!("{0:.1$}", seq.2, seq.3);
-        if a.len() >= b.len() {
-            a.len()
-        } else {
-            b.len()
-        }
+        cmp::max(
+            format!("{0:.1$}", seq.0, seq.3).len(),
+            format!("{0:.1$}", seq.2, seq.3).len(),
+        )
     } else {
         1
     };
@@ -65,7 +62,8 @@ fn getseq(args: &Vec<String>) -> Result<Sequence> {
         _ => return Err("Not enough arguments".into()),
     };
 
-    // Determine precision.
+    // Determine precision. Necessary because format!() has no equivalent to
+    // the sprintf %g format found in other languages.
     for num in args {
         if let Some(idx) = num.chars().position(|x| x == '.') {
             if idx > seq.3 {
