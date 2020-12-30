@@ -53,16 +53,38 @@ mod seq {
 
     fn getseq(args: &Vec<String>) -> Result<Sequence> {
         let mut seq: Sequence = match args.len() {
-            1 => (1.0, 1.0, args[0].trim().parse()?, 0),
-            2 => (args[0].trim().parse()?, 1.0, args[1].trim().parse()?, 0),
-            3 => (
-                args[0].trim().parse()?,
-                (args[1].trim().parse::<f64>()?).abs(),
-                args[2].trim().parse()?,
-                0,
-            ),
-            _ => return Err("Not enough arguments".into()),
+            1 => (1.0, 0.0, args[0].trim().parse()?, 0),
+            2 => (args[0].trim().parse()?, 0.0, args[1].trim().parse()?, 0),
+            3 => {
+                let s: Sequence = (
+                    args[0].trim().parse()?,
+                    args[1].trim().parse()?,
+                    args[2].trim().parse()?,
+                    0,
+                );
+
+                // Make sure the increment is valid.
+                if s.1 == 0.0 {
+                    return Err(
+                        format!("zero {}crement", if s.0 < s.2 { "in" } else { "de" }).into(),
+                    );
+                }
+                if s.1 <= 0.0 && s.0 < s.2 {
+                    return Err("needs positive increment".into());
+                }
+                if s.1 >= 0.0 && s.0 > s.2 {
+                    return Err("needs negative decrement".into());
+                }
+                s
+            }
+            0 => return Err("Not enough arguments".into()),
+            _ => return Err("Too many arguments".into()),
         };
+
+        // Set the default increment.
+        if seq.1 == 0.0 {
+            seq.1 = if seq.0 < seq.2 { 1.0 } else { -1.0 };
+        }
 
         // Determine precision. Necessary because format!() has no equivalent to
         // the sprintf %g format found in other languages.
@@ -98,7 +120,7 @@ mod seq {
             while cur >= seq.2 {
                 write!(out, "{:0>1$.2$}{3}", cur, width, seq.3, sep)?;
                 iter += 1;
-                cur = seq.0 - seq.1 * iter as f64;
+                cur = seq.0 + seq.1 * iter as f64;
             }
             if cur > seq.2 {
                 write!(out, "{:0>1$.2$}{3}", seq.2, width, seq.3, sep)?;
@@ -186,6 +208,145 @@ mod seq {
             assert_eq!(matches.free, vec!["10"], "Should have one free string");
 
             Ok(())
+        }
+
+        #[test]
+        fn test_bad_options() {
+            let opts = options();
+            match opts.parse(vec!["-x"]) {
+                Err(e) => assert_eq!(e.to_string(), "Unrecognized option: \'x\'"),
+                Ok(_) => assert!(false, "Option -x should be invalid"),
+            }
+            match opts.parse(vec!["--foo"]) {
+                Err(e) => assert_eq!(e.to_string(), "Unrecognized option: \'foo\'"),
+                Ok(_) => assert!(false, "Option -foo should be invalid"),
+            }
+        }
+
+        #[test]
+        fn test_getseq() {
+            struct TestCase {
+                desc: String,
+                args: Vec<String>,
+                seq: Sequence,
+            }
+
+            for item in vec![
+                TestCase {
+                    desc: "arg 10".to_string(),
+                    args: vec!["10".to_string()],
+                    seq: (1f64, 1f64, 10f64, 0usize),
+                },
+                TestCase {
+                    desc: "args 10, 20".to_string(),
+                    args: vec!["10".to_string(), "20".to_string()],
+                    seq: (10f64, 1f64, 20f64, 0usize),
+                },
+                TestCase {
+                    desc: "args 10, 2, 20".to_string(),
+                    args: vec!["10".to_string(), "2".to_string(), "20".to_string()],
+                    seq: (10f64, 2f64, 20f64, 0usize),
+                },
+                TestCase {
+                    desc: "args -10, 5, 10".to_string(),
+                    args: vec!["-10".to_string(), "5".to_string(), "10".to_string()],
+                    seq: (-10f64, 5f64, 10f64, 0usize),
+                },
+                TestCase {
+                    desc: "args -10, 5, 0".to_string(),
+                    args: vec!["-10".to_string(), "5".to_string(), "0".to_string()],
+                    seq: (-10f64, 5f64, 0f64, 0usize),
+                },
+                TestCase {
+                    desc: "args -10, 2, -6".to_string(),
+                    args: vec!["-10".to_string(), "2".to_string(), "-6".to_string()],
+                    seq: (-10f64, 2f64, -6f64, 0usize),
+                },
+                TestCase {
+                    desc: "args 10, -2, -6".to_string(),
+                    args: vec!["10".to_string(), "-2".to_string(), "-6".to_string()],
+                    seq: (10f64, -2f64, -6f64, 0usize),
+                },
+                TestCase {
+                    desc: "args 10, -6".to_string(),
+                    args: vec!["10".to_string(), "-6".to_string()],
+                    seq: (10f64, -1f64, -6f64, 0usize),
+                },
+                TestCase {
+                    desc: "args 10.0, 2.25".to_string(),
+                    args: vec!["10.0".to_string(), "2.25".to_string()],
+                    seq: (10f64, -1f64, 2.25f64, 2usize),
+                },
+                TestCase {
+                    desc: "args 10.4".to_string(),
+                    args: vec!["10.4".to_string()],
+                    seq: (1f64, 1f64, 10.4f64, 1usize),
+                },
+                TestCase {
+                    desc: "args 10.225".to_string(),
+                    args: vec!["10.225".to_string()],
+                    seq: (1f64, 1f64, 10.225f64, 3usize),
+                },
+                TestCase {
+                    desc: "args 1, 0.5, 10.500".to_string(),
+                    args: vec!["1".into(), ".5".into(), "10.5004".into()],
+                    seq: (1f64, 0.5f64, 10.5004f64, 4usize),
+                },
+            ] {
+                assert_eq!(
+                    getseq(&item.args).unwrap(),
+                    item.seq,
+                    "Should get expected sequence for {}",
+                    item.desc,
+                );
+            }
+        }
+
+        #[test]
+        fn test_bad_getseq() {
+            struct TestCase {
+                desc: String,
+                args: Vec<String>,
+                err: String,
+            }
+
+            for item in vec![
+                TestCase {
+                    desc: "no args".into(),
+                    args: vec![],
+                    err: "Not enough arguments".into(),
+                },
+                TestCase {
+                    desc: "too many args".into(),
+                    args: vec!["x".to_string(); 4],
+                    err: "Too many arguments".into(),
+                },
+                TestCase {
+                    desc: "zero increment".into(),
+                    args: vec!["1".into(), "0".into(), "5".into()],
+                    err: "zero increment".into(),
+                },
+                TestCase {
+                    desc: "zero decrement".into(),
+                    args: vec!["1".into(), "0".into(), "-5".into()],
+                    err: "zero decrement".into(),
+                },
+                TestCase {
+                    desc: "positive increment".into(),
+                    args: vec!["1".into(), "-1".into(), "5".into()],
+                    err: "needs positive increment".into(),
+                },
+                TestCase {
+                    desc: "negative decrement".into(),
+                    args: vec!["1".into(), "1".into(), "-5".into()],
+                    err: "needs negative decrement".into(),
+                },
+            ] {
+                match getseq(&item.args) {
+                    Err(e) => assert_eq!(e.to_string(), item.err),
+                    Ok(_) => assert!(false, "Should get error for {}", item.desc),
+                }
+            }
         }
     }
 }
