@@ -233,62 +233,62 @@ mod seq {
 
             for item in vec![
                 TestCase {
-                    desc: "arg 10".to_string(),
-                    args: vec!["10".to_string()],
+                    desc: "arg 10".into(),
+                    args: vec!["10".into()],
                     seq: (1f64, 1f64, 10f64, 0usize),
                 },
                 TestCase {
-                    desc: "args 10, 20".to_string(),
-                    args: vec!["10".to_string(), "20".to_string()],
+                    desc: "args 10, 20".into(),
+                    args: vec!["10".into(), "20".into()],
                     seq: (10f64, 1f64, 20f64, 0usize),
                 },
                 TestCase {
-                    desc: "args 10, 2, 20".to_string(),
-                    args: vec!["10".to_string(), "2".to_string(), "20".to_string()],
+                    desc: "args 10, 2, 20".into(),
+                    args: vec!["10".into(), "2".into(), "20".into()],
                     seq: (10f64, 2f64, 20f64, 0usize),
                 },
                 TestCase {
-                    desc: "args -10, 5, 10".to_string(),
-                    args: vec!["-10".to_string(), "5".to_string(), "10".to_string()],
+                    desc: "args -10, 5, 10".into(),
+                    args: vec!["-10".into(), "5".into(), "10".into()],
                     seq: (-10f64, 5f64, 10f64, 0usize),
                 },
                 TestCase {
-                    desc: "args -10, 5, 0".to_string(),
-                    args: vec!["-10".to_string(), "5".to_string(), "0".to_string()],
+                    desc: "args -10, 5, 0".into(),
+                    args: vec!["-10".into(), "5".into(), "0".into()],
                     seq: (-10f64, 5f64, 0f64, 0usize),
                 },
                 TestCase {
-                    desc: "args -10, 2, -6".to_string(),
-                    args: vec!["-10".to_string(), "2".to_string(), "-6".to_string()],
+                    desc: "args -10, 2, -6".into(),
+                    args: vec!["-10".into(), "2".into(), "-6".into()],
                     seq: (-10f64, 2f64, -6f64, 0usize),
                 },
                 TestCase {
-                    desc: "args 10, -2, -6".to_string(),
-                    args: vec!["10".to_string(), "-2".to_string(), "-6".to_string()],
+                    desc: "args 10, -2, -6".into(),
+                    args: vec!["10".into(), "-2".into(), "-6".into()],
                     seq: (10f64, -2f64, -6f64, 0usize),
                 },
                 TestCase {
-                    desc: "args 10, -6".to_string(),
-                    args: vec!["10".to_string(), "-6".to_string()],
+                    desc: "args 10, -6".into(),
+                    args: vec!["10".into(), "-6".into()],
                     seq: (10f64, -1f64, -6f64, 0usize),
                 },
                 TestCase {
-                    desc: "args 10.0, 2.25".to_string(),
-                    args: vec!["10.0".to_string(), "2.25".to_string()],
+                    desc: "args 10.0, 2.25".into(),
+                    args: vec!["10.0".into(), "2.25".into()],
                     seq: (10f64, -1f64, 2.25f64, 2usize),
                 },
                 TestCase {
-                    desc: "args 10.4".to_string(),
-                    args: vec!["10.4".to_string()],
+                    desc: "args 10.4".into(),
+                    args: vec!["10.4".into()],
                     seq: (1f64, 1f64, 10.4f64, 1usize),
                 },
                 TestCase {
-                    desc: "args 10.225".to_string(),
-                    args: vec!["10.225".to_string()],
+                    desc: "args 10.225".into(),
+                    args: vec!["10.225".into()],
                     seq: (1f64, 1f64, 10.225f64, 3usize),
                 },
                 TestCase {
-                    desc: "args 1, 0.5, 10.500".to_string(),
+                    desc: "args 1, 0.5, 10.500".into(),
                     args: vec!["1".into(), ".5".into(), "10.5004".into()],
                     seq: (1f64, 0.5f64, 10.5004f64, 4usize),
                 },
@@ -318,7 +318,7 @@ mod seq {
                 },
                 TestCase {
                     desc: "too many args".into(),
-                    args: vec!["x".to_string(); 4],
+                    args: vec!["x".into(); 4],
                     err: "Too many arguments".into(),
                 },
                 TestCase {
@@ -343,7 +343,12 @@ mod seq {
                 },
             ] {
                 match getseq(&item.args) {
-                    Err(e) => assert_eq!(e.to_string(), item.err),
+                    Err(e) => assert_eq!(
+                        e.to_string(),
+                        item.err,
+                        "Should get error for {}",
+                        item.desc
+                    ),
                     Ok(_) => assert!(false, "Should get error for {}", item.desc),
                 }
             }
