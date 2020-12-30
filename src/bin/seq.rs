@@ -24,7 +24,7 @@ mod seq {
         };
         let seq =
             getseq(&matches.free).or(Err(opts.short_usage("seq") + " [first [incr]] last"))?;
-        let sep = matches.opt_str("s").unwrap_or(String::from("\n"));
+        let sep = matches.opt_str("s").unwrap_or("\n".to_string());
         let width = if matches.opt_present("w") {
             cmp::max(
                 format!("{0:.1$}", seq.0, seq.3).len(),
@@ -84,12 +84,12 @@ mod seq {
         term: Option<String>,
     ) -> Result<()> {
         let mut cur = seq.0;
-        let mut iter = 0.0;
+        let mut iter = 0isize;
         if seq.0 <= seq.2 {
             while cur <= seq.2 {
                 write!(out, "{:0>1$.2$}{3}", cur, width, seq.3, sep)?;
-                iter += 1.0;
-                cur = seq.0 + seq.1 * iter;
+                iter += 1;
+                cur = seq.0 + seq.1 * iter as f64;
             }
             if cur < seq.2 {
                 write!(out, "{:0>1$.2$}{3}", seq.2, width, seq.3, sep)?;
@@ -97,8 +97,8 @@ mod seq {
         } else {
             while cur >= seq.2 {
                 write!(out, "{:0>1$.2$}{3}", cur, width, seq.3, sep)?;
-                iter += 1.0;
-                cur = seq.0 - seq.1 * iter;
+                iter += 1;
+                cur = seq.0 - seq.1 * iter as f64;
             }
             if cur > seq.2 {
                 write!(out, "{:0>1$.2$}{3}", seq.2, width, seq.3, sep)?;
@@ -112,10 +112,80 @@ mod seq {
 
     #[cfg(test)]
     mod tests {
-        // use super::*;
+        use super::*;
         #[test]
-        fn exploration() {
-            assert_eq!(2 + 2, 4);
+        fn test_options() -> Result<()> {
+            let opts = options();
+            // Start with no args.
+            let matches = opts.parse(vec![""; 0])?;
+            for opt in vec!["w", "s", "t"] {
+                assert!(matches.opt_defined(opt), "Option -{} not defined", opt);
+                assert!(
+                    !matches.opt_present(opt),
+                    "Option -{} should not be present",
+                    opt
+                );
+            }
+            assert_eq!(matches.free, vec![""; 0], "Should have no free strings");
+
+            // Try one arg.
+            let matches = opts.parse(vec!["10"])?;
+            for opt in vec!["w", "s", "t"] {
+                assert!(
+                    !matches.opt_present(opt),
+                    "Option -{} should not be present",
+                    opt
+                );
+            }
+            assert_eq!(matches.free, vec!["10"], "Should have one free string");
+
+            // Add the -w flag.
+            let matches = opts.parse(vec!["-w", "8"])?;
+            assert!(matches.opt_present("w"), "Option -w not found");
+            assert!(!matches.opt_present("s"), "Option -s should not be found");
+            assert!(!matches.opt_present("t"), "Option -t should not be found");
+            assert_eq!(matches.free, vec!["8"], "Should have one free string");
+
+            // Add additional args.
+            let matches = opts.parse(vec!["-w", "8", "10"])?;
+            assert!(matches.opt_present("w"), "Option -w not found");
+            assert!(!matches.opt_present("s"), "Option -s should not be found");
+            assert!(!matches.opt_present("t"), "Option -t should not be found");
+            assert_eq!(
+                matches.free,
+                vec!["8", "10"],
+                "Should have two free strings"
+            );
+
+            // Add negated args.
+            let matches = opts.parse(vec!["-w", "--", "-8", "10"])?;
+            assert!(matches.opt_present("w"), "Option -w not found");
+            assert!(!matches.opt_present("s"), "Option -s should not be found");
+            assert!(!matches.opt_present("t"), "Option -t should not be found");
+            assert_eq!(
+                matches.free,
+                vec!["-8", "10"],
+                "Should have negated and non-negated free strings"
+            );
+
+            // Add other args.
+            let matches = opts.parse(vec!["-w", "-t", "foo", "-s", "^", "10"])?;
+            assert!(matches.opt_present("w"), "Option -w not found");
+            assert!(matches.opt_present("s"), "Option -s not found");
+            assert!(matches.opt_present("t"), "Option -t not found");
+            assert_eq!(
+                matches.opt_str("s"),
+                Some("^".to_string()),
+                "Missing -s string"
+            );
+            assert_eq!(
+                matches.opt_str("t"),
+                Some("foo".to_string()),
+                "Missing -t string"
+            );
+            assert_eq!(matches.free, vec!["10"], "Should have one free string");
+
+            Ok(())
         }
     }
 }
