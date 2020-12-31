@@ -40,11 +40,11 @@ mod seq {
 
     fn options() -> Options {
         let mut opts = Options::new();
-        opts.optflag("w", "", " Equalize the widths of all numbers");
-        opts.optopt("s", "", "Use string to separate numbers", "string");
+        opts.optflag("w", "equal-width", " Equalize the widths of all numbers");
+        opts.optopt("s", "separator", "Use string to separate numbers", "string");
         opts.optopt(
             "t",
-            "",
+            "terminator",
             "Use string to terminate sequence of numbers",
             "string",
         );
@@ -137,75 +137,128 @@ mod seq {
         use super::*;
         #[test]
         fn test_options() -> Result<()> {
+            struct TestCase<'a> {
+                desc: String,
+                args: Vec<&'a str>,
+                unset: Vec<&'a str>,
+                free: Vec<&'a str>,
+                set: Vec<&'a str>,
+                vals: Vec<Vec<&'a str>>,
+            };
+
+            let defined_opts = vec!["w", "s", "t"];
             let opts = options();
-            // Start with no args.
-            let matches = opts.parse(vec![""; 0])?;
-            for opt in vec!["w", "s", "t"] {
-                assert!(matches.opt_defined(opt), "Option -{} not defined", opt);
-                assert!(
-                    !matches.opt_present(opt),
-                    "Option -{} should not be present",
-                    opt
+            for item in vec![
+                TestCase {
+                    desc: "no args".into(),
+                    args: Vec::new(),
+                    unset: defined_opts.clone(),
+                    free: Vec::new(),
+                    set: Vec::new(),
+                    vals: Vec::new(),
+                },
+                TestCase {
+                    desc: "one free".into(),
+                    args: vec!["10"],
+                    unset: defined_opts.clone(),
+                    free: vec!["10"],
+                    set: Vec::new(),
+                    vals: Vec::new(),
+                },
+                TestCase {
+                    desc: "w and one free".into(),
+                    args: vec!["-w", "8"],
+                    unset: vec!["s", "t"],
+                    set: vec!["w"],
+                    free: vec!["8"],
+                    vals: Vec::new(),
+                },
+                TestCase {
+                    desc: "w and two free".into(),
+                    args: vec!["-w", "8", "10"],
+                    unset: vec!["s", "t"],
+                    set: vec!["w"],
+                    free: vec!["8", "10"],
+                    vals: Vec::new(),
+                },
+                TestCase {
+                    desc: "negated arg".into(),
+                    args: vec!["-w", "--", "-8", "10"],
+                    unset: vec!["s", "t"],
+                    set: vec!["w"],
+                    free: vec!["-8", "10"],
+                    vals: Vec::new(),
+                },
+                TestCase {
+                    desc: "all options".into(),
+                    args: vec!["-w", "-t", "foo", "-s", "^", "10"],
+                    unset: Vec::new(),
+                    set: vec!["w", "t", "s"],
+                    free: vec!["10"],
+                    vals: vec![vec!["t", "foo"], vec!["s", "^"]],
+                },
+                TestCase {
+                    desc: "long options".into(),
+                    args: vec![
+                        "--equal-width",
+                        "--terminator",
+                        "🤖",
+                        "--separator",
+                        ":",
+                        "--",
+                        "10",
+                        "-5",
+                    ],
+                    unset: Vec::new(),
+                    set: vec!["w", "t", "s"],
+                    free: vec!["10", "-5"],
+                    vals: vec![vec!["t", "🤖"], vec!["s", ":"]],
+                },
+            ] {
+                let matches = opts.parse(item.args)?;
+                // Make sure all options are defined.
+                for opt in &defined_opts {
+                    assert!(matches.opt_defined(opt), "Option -{} not defined", opt);
+                }
+
+                // Check for unset args.
+                for opt in &item.unset {
+                    assert!(
+                        !matches.opt_present(opt),
+                        "Option -{} should not be present with {}",
+                        opt,
+                        item.desc,
+                    );
+                }
+
+                // Check for presence of set args.
+                for opt in &item.set {
+                    assert!(
+                        matches.opt_present(opt),
+                        "Option -{} should not be present with {}",
+                        opt,
+                        item.desc,
+                    );
+                }
+
+                // Check for option values.
+                for kv in &item.vals {
+                    assert_eq!(
+                        matches.opt_str(kv[0]),
+                        Some(kv[1].into()),
+                        "Missing -{} string with {}",
+                        kv[0],
+                        item.desc,
+                    );
+                }
+
+                // Check for free args.
+                assert_eq!(
+                    matches.free, item.free,
+                    "Invalid free strings with {}",
+                    item.desc
                 );
             }
-            assert_eq!(matches.free, vec![""; 0], "Should have no free strings");
-
-            // Try one arg.
-            let matches = opts.parse(vec!["10"])?;
-            for opt in vec!["w", "s", "t"] {
-                assert!(
-                    !matches.opt_present(opt),
-                    "Option -{} should not be present",
-                    opt
-                );
-            }
-            assert_eq!(matches.free, vec!["10"], "Should have one free string");
-
-            // Add the -w flag.
-            let matches = opts.parse(vec!["-w", "8"])?;
-            assert!(matches.opt_present("w"), "Option -w not found");
-            assert!(!matches.opt_present("s"), "Option -s should not be found");
-            assert!(!matches.opt_present("t"), "Option -t should not be found");
-            assert_eq!(matches.free, vec!["8"], "Should have one free string");
-
-            // Add additional args.
-            let matches = opts.parse(vec!["-w", "8", "10"])?;
-            assert!(matches.opt_present("w"), "Option -w not found");
-            assert!(!matches.opt_present("s"), "Option -s should not be found");
-            assert!(!matches.opt_present("t"), "Option -t should not be found");
-            assert_eq!(
-                matches.free,
-                vec!["8", "10"],
-                "Should have two free strings"
-            );
-
-            // Add negated args.
-            let matches = opts.parse(vec!["-w", "--", "-8", "10"])?;
-            assert!(matches.opt_present("w"), "Option -w not found");
-            assert!(!matches.opt_present("s"), "Option -s should not be found");
-            assert!(!matches.opt_present("t"), "Option -t should not be found");
-            assert_eq!(
-                matches.free,
-                vec!["-8", "10"],
-                "Should have negated and non-negated free strings"
-            );
-
-            // Add other args.
-            let matches = opts.parse(vec!["-w", "-t", "foo", "-s", "^", "10"])?;
-            assert!(matches.opt_present("w"), "Option -w not found");
-            assert!(matches.opt_present("s"), "Option -s not found");
-            assert!(matches.opt_present("t"), "Option -t not found");
-            assert_eq!(
-                matches.opt_str("s"),
-                Some("^".to_string()),
-                "Missing -s string"
-            );
-            assert_eq!(
-                matches.opt_str("t"),
-                Some("foo".to_string()),
-                "Missing -t string"
-            );
-            assert_eq!(matches.free, vec!["10"], "Should have one free string");
 
             Ok(())
         }
