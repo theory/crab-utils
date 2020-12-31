@@ -113,19 +113,14 @@ mod seq {
                 iter += 1;
                 cur = seq.0 + seq.1 * iter as f64;
             }
-            if cur < seq.2 {
-                write!(out, "{:0>1$.2$}{3}", seq.2, width, seq.3, sep)?;
-            }
         } else {
             while cur >= seq.2 {
                 write!(out, "{:0>1$.2$}{3}", cur, width, seq.3, sep)?;
                 iter += 1;
                 cur = seq.0 + seq.1 * iter as f64;
             }
-            if cur > seq.2 {
-                write!(out, "{:0>1$.2$}{3}", seq.2, width, seq.3, sep)?;
-            }
         }
+
         if let Some(term) = term {
             write!(out, "{}", term)?;
         }
@@ -210,7 +205,7 @@ mod seq {
                         "-5",
                     ],
                     unset: Vec::new(),
-                    set: vec!["w", "t", "s"],
+                    set: vec!["equal-width", "terminator", "separator"],
                     free: vec!["10", "-5"],
                     vals: vec![vec!["t", "🤖"], vec!["s", ":"]],
                 },
@@ -405,6 +400,193 @@ mod seq {
                     Ok(_) => assert!(false, "Should get error for {}", item.desc),
                 }
             }
+        }
+
+        #[test]
+        fn test_emitseq() -> Result<()> {
+            struct TestCase<'a> {
+                desc: &'a str,
+                seq: Sequence,
+                sep: &'a str,
+                width: usize,
+                term: Option<String>,
+                exp: String,
+            };
+
+            for item in vec![
+                TestCase {
+                    desc: "1-3",
+                    seq: (1.0, 1.0, 3.0, 0),
+                    sep: "\n",
+                    width: 1,
+                    term: None,
+                    exp: "1\n2\n3\n".into(),
+                },
+                TestCase {
+                    desc: "neg 1-3",
+                    seq: (-1.0, -1.0, -3.0, 0),
+                    sep: "\n",
+                    width: 1,
+                    term: None,
+                    exp: "-1\n-2\n-3\n".into(),
+                },
+                TestCase {
+                    desc: "neg 3-1",
+                    seq: (-3.0, 1.0, -1.0, 0),
+                    sep: "\n",
+                    width: 1,
+                    term: None,
+                    exp: "-3\n-2\n-1\n".into(),
+                },
+                TestCase {
+                    desc: "1, 3, 5",
+                    seq: (1.0, 2.0, 5.0, 0),
+                    sep: "\n",
+                    width: 1,
+                    term: None,
+                    exp: "1\n3\n5\n".into(),
+                },
+                TestCase {
+                    desc: "neg 1, 3, 5",
+                    seq: (-1.0, -2.0, -5.0, 0),
+                    sep: "\n",
+                    width: 1,
+                    term: None,
+                    exp: "-1\n-3\n-5\n".into(),
+                },
+                TestCase {
+                    desc: "1.0-3.0",
+                    seq: (1.0, 1.0, 3.0, 1),
+                    sep: "\n",
+                    width: 1,
+                    term: None,
+                    exp: "1.0\n2.0\n3.0\n".into(),
+                },
+                TestCase {
+                    desc: "1-3 x 0.5",
+                    seq: (1.0, 0.5, 3.0, 1),
+                    sep: "\n",
+                    width: 1,
+                    term: None,
+                    exp: "1.0\n1.5\n2.0\n2.5\n3.0\n".into(),
+                },
+                TestCase {
+                    desc: "1-2.1 x 0.3",
+                    seq: (1.0, 0.3, 2.1, 1),
+                    sep: ",",
+                    width: 1,
+                    term: None,
+                    exp: "1.0,1.3,1.6,1.9,".into(),
+                },
+                TestCase {
+                    desc: "neg 1-2.1 x 0.3",
+                    seq: (-1.0, -0.3, -2.1, 1),
+                    sep: ",",
+                    width: 1,
+                    term: None,
+                    exp: "-1.0,-1.3,-1.6,-1.9,".into(),
+                },
+                TestCase {
+                    desc: "1-3 precision 3",
+                    seq: (1.0, 1.0, 3.0, 3),
+                    sep: ",",
+                    width: 1,
+                    term: None,
+                    exp: "1.000,2.000,3.000,".into(),
+                },
+                TestCase {
+                    desc: "1-3 width 6 precision 3",
+                    seq: (1.0, 1.0, 3.0, 3),
+                    sep: ",",
+                    width: 6,
+                    term: None,
+                    exp: "01.000,02.000,03.000,".into(),
+                },
+                TestCase {
+                    desc: "8-10 width 6 precision 3",
+                    seq: (8.0, 1.0, 10.0, 3),
+                    sep: ",",
+                    width: 6,
+                    term: None,
+                    exp: "08.000,09.000,10.000,".into(),
+                },
+                TestCase {
+                    desc: "8-10 x 0.25 width 5 precision",
+                    seq: (8.0, 0.25, 10.0, 2),
+                    sep: ",",
+                    width: 5,
+                    term: None,
+                    exp: "08.00,08.25,08.50,08.75,09.00,09.25,09.50,09.75,10.00,".into(),
+                },
+                TestCase {
+                    desc: "simple 1-100",
+                    seq: (1.0, 1.0, 100.0, 0),
+                    sep: "\n",
+                    width: 1,
+                    term: None,
+                    exp: (1..=100)
+                        .map(|x| x.to_string())
+                        .collect::<Vec<String>>()
+                        .join("\n")
+                        + "\n",
+                },
+                TestCase {
+                    desc: "1-100 with alt sep",
+                    seq: (1.0, 1.0, 100.0, 0),
+                    sep: ":",
+                    width: 1,
+                    term: None,
+                    exp: (1..=100)
+                        .map(|x| x.to_string())
+                        .collect::<Vec<String>>()
+                        .join(":")
+                        + ":",
+                },
+                TestCase {
+                    desc: "1-100 with width",
+                    seq: (1.0, 1.0, 100.0, 0),
+                    sep: "\n",
+                    width: 4,
+                    term: None,
+                    exp: (1..=100)
+                        .map(|x| format!("{:0>4}", x))
+                        .collect::<Vec<String>>()
+                        .join("\n")
+                        + "\n",
+                },
+                TestCase {
+                    desc: "1-100 with term",
+                    seq: (1.0, 1.0, 100.0, 0),
+                    sep: "\n",
+                    width: 1,
+                    term: Some("foo".into()),
+                    exp: (1..=100)
+                        .map(|x| x.to_string())
+                        .collect::<Vec<String>>()
+                        .join("\n")
+                        + "\n"
+                        + "foo",
+                },
+                TestCase {
+                    desc: "-5 0.25 2",
+                    seq: (-5.0, 0.25, 2.0, 2),
+                    sep: ",",
+                    width: 1,
+                    term: None,
+                    exp: "-5.00,-4.75,-4.50,-4.25,-4.00,-3.75,-3.50,-3.25,-3.00,-2.75,-2.50,-2.25,-2.00,-1.75,-1.50,-1.25,-1.00,-0.75,-0.50,-0.25,0.00,0.25,0.50,0.75,1.00,1.25,1.50,1.75,2.00,".into(),
+                },
+            ] {
+                let mut buf: Vec<u8> = vec![];
+                emitseq(&mut buf, item.seq, item.sep, item.width, item.term)?;
+                assert_eq!(
+                    item.exp,
+                    String::from_utf8(buf).unwrap(),
+                    "Invalid output for {}",
+                    item.desc,
+                );
+            }
+
+            Ok(())
         }
     }
 }
