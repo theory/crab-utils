@@ -19,10 +19,7 @@ mod seq {
 
     pub fn run(out: &mut dyn Write, argv: Vec<String>) -> Result<()> {
         let opts = options();
-        let matches = match opts.parse(argv) {
-            Ok(m) => m,
-            Err(f) => return Err(f.to_string().into()),
-        };
+        let matches = opts.parse(argv).or_else(|e| Err(e))?;
         let seq = getseq(&matches.free)?;
 
         let sep = matches.opt_str("s").unwrap_or("\n".to_string());
