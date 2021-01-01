@@ -46,14 +46,9 @@ mod seq {
 
     fn options() -> Options {
         let mut opts = Options::new();
-        opts.optflag("w", "equal-width", " Equalize the widths of all numbers");
-        opts.optopt("s", "separator", "Use string to separate numbers", "string");
-        opts.optopt(
-            "t",
-            "terminator",
-            "Use string to terminate sequence of numbers",
-            "string",
-        );
+        opts.optflag("w", "equal-width", "");
+        opts.optopt("s", "separator", "", "");
+        opts.optopt("t", "terminator", "", "");
         opts
     }
 
