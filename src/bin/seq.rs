@@ -477,13 +477,14 @@ mod seq {
         }
 
         #[test]
-        fn test_emitseq() -> Result<()> {
+        fn test_emitseq_run() -> Result<()> {
             struct TestCase<'a> {
                 desc: &'a str,
                 seq: Sequence,
                 sep: &'a str,
                 width: usize,
                 term: Option<String>,
+                args: Vec<String>,
                 exp: String,
             };
 
@@ -494,6 +495,7 @@ mod seq {
                     sep: "\n",
                     width: 1,
                     term: None,
+                    args: vec!["3".into()],
                     exp: "1\n2\n3\n".into(),
                 },
                 TestCase {
@@ -502,6 +504,7 @@ mod seq {
                     sep: "\n",
                     width: 1,
                     term: None,
+                    args: vec!["--".into(), "-1".into(), "-3".into()],
                     exp: "-1\n-2\n-3\n".into(),
                 },
                 TestCase {
@@ -510,6 +513,7 @@ mod seq {
                     sep: "\n",
                     width: 1,
                     term: None,
+                    args: vec!["--".into(), "-3".into(), "-1".into()],
                     exp: "-3\n-2\n-1\n".into(),
                 },
                 TestCase {
@@ -518,6 +522,7 @@ mod seq {
                     sep: "\n",
                     width: 1,
                     term: None,
+                    args: vec!["1".into(), "2".into(), "5".into()],
                     exp: "1\n3\n5\n".into(),
                 },
                 TestCase {
@@ -526,6 +531,7 @@ mod seq {
                     sep: "\n",
                     width: 1,
                     term: None,
+                    args: vec!["--".into(), "-1".into(), "-2".into(), "-5".into()],
                     exp: "-1\n-3\n-5\n".into(),
                 },
                 TestCase {
@@ -534,6 +540,7 @@ mod seq {
                     sep: "\n",
                     width: 1,
                     term: None,
+                    args: vec!["3.0".into()],
                     exp: "1.0\n2.0\n3.0\n".into(),
                 },
                 TestCase {
@@ -542,6 +549,7 @@ mod seq {
                     sep: "\n",
                     width: 1,
                     term: None,
+                    args: vec!["1".into(), "0.5".into(), "3".into()],
                     exp: "1.0\n1.5\n2.0\n2.5\n3.0\n".into(),
                 },
                 TestCase {
@@ -550,6 +558,7 @@ mod seq {
                     sep: ",",
                     width: 1,
                     term: None,
+                    args: vec!["-s,".into(), "1".into(), "0.3".into(), "2.1".into()],
                     exp: "1.0,1.3,1.6,1.9,".into(),
                 },
                 TestCase {
@@ -558,6 +567,13 @@ mod seq {
                     sep: ",",
                     width: 1,
                     term: None,
+                    args: vec![
+                        "-s,".into(),
+                        "--".into(),
+                        "-1".into(),
+                        "-0.3".into(),
+                        "-2.1".into(),
+                    ],
                     exp: "-1.0,-1.3,-1.6,-1.9,".into(),
                 },
                 TestCase {
@@ -566,15 +582,8 @@ mod seq {
                     sep: ",",
                     width: 1,
                     term: None,
+                    args: vec!["-s,".into(), "3.000".into()],
                     exp: "1.000,2.000,3.000,".into(),
-                },
-                TestCase {
-                    desc: "1-3 width 6 precision 3",
-                    seq: (1.0, 1.0, 3.0, 3),
-                    sep: ",",
-                    width: 6,
-                    term: None,
-                    exp: "01.000,02.000,03.000,".into(),
                 },
                 TestCase {
                     desc: "8-10 width 6 precision 3",
@@ -582,14 +591,22 @@ mod seq {
                     sep: ",",
                     width: 6,
                     term: None,
+                    args: vec!["-s,".into(), "-w".into(), "8.000".into(), "10".into()],
                     exp: "08.000,09.000,10.000,".into(),
                 },
                 TestCase {
-                    desc: "8-10 x 0.25 width 5 precision",
+                    desc: "8-10 x 0.25 width 5",
                     seq: (8.0, 0.25, 10.0, 2),
                     sep: ",",
                     width: 5,
                     term: None,
+                    args: vec![
+                        "-s,".into(),
+                        "-w".into(),
+                        "8".into(),
+                        ".25".into(),
+                        "10".into(),
+                    ],
                     exp: "08.00,08.25,08.50,08.75,09.00,09.25,09.50,09.75,10.00,".into(),
                 },
                 TestCase {
@@ -598,6 +615,7 @@ mod seq {
                     sep: "\n",
                     width: 1,
                     term: None,
+                    args: vec!["100".into()],
                     exp: (1..=100)
                         .map(|x| x.to_string())
                         .collect::<Vec<String>>()
@@ -610,6 +628,7 @@ mod seq {
                     sep: ":",
                     width: 1,
                     term: None,
+                    args: vec!["-s:".into(), "100".into()],
                     exp: (1..=100)
                         .map(|x| x.to_string())
                         .collect::<Vec<String>>()
@@ -620,10 +639,11 @@ mod seq {
                     desc: "1-100 with width",
                     seq: (1.0, 1.0, 100.0, 0),
                     sep: "\n",
-                    width: 4,
+                    width: 3,
                     term: None,
+                    args: vec!["-w".into(), "100".into()],
                     exp: (1..=100)
-                        .map(|x| format!("{:0>4}", x))
+                        .map(|x| format!("{:0>3}", x))
                         .collect::<Vec<String>>()
                         .join("\n")
                         + "\n",
@@ -634,6 +654,7 @@ mod seq {
                     sep: "\n",
                     width: 1,
                     term: Some("foo".into()),
+                    args: vec!["-tfoo".into(), "100".into()],
                     exp: (1..=100)
                         .map(|x| x.to_string())
                         .collect::<Vec<String>>()
@@ -647,6 +668,7 @@ mod seq {
                     sep: ",",
                     width: 1,
                     term: None,
+                    args: vec!["-s,".into(), "--".into(), "-5".into(), "0.25".into(), "2".into()],
                     exp: "-5.00,-4.75,-4.50,-4.25,-4.00,-3.75,-3.50,-3.25,-3.00,-2.75,-2.50,-2.25,-2.00,-1.75,-1.50,-1.25,-1.00,-0.75,-0.50,-0.25,0.00,0.25,0.50,0.75,1.00,1.25,1.50,1.75,2.00,".into(),
                 },
             ] {
@@ -656,6 +678,15 @@ mod seq {
                     item.exp,
                     String::from_utf8(buf).unwrap(),
                     "Invalid output for {}",
+                    item.desc,
+                );
+
+                let mut buf: Vec<u8> = vec![];
+                run(&mut buf, item.args)?;
+                assert_eq!(
+                    item.exp,
+                    String::from_utf8(buf).unwrap(),
+                    "Invalid run output for {}",
                     item.desc,
                 );
             }
