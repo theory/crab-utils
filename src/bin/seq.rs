@@ -1,5 +1,6 @@
 use std::io::stdout;
 use std::{env, process};
+
 fn main() {
     if let Err(err) = seq::run(&mut stdout(), env::args().skip(1).collect()) {
         eprintln!("{}", err);
@@ -9,11 +10,11 @@ fn main() {
 
 mod seq {
     use std::io::Write;
-    use std::{cmp, error, str};
+    use std::{cmp, error, result, str};
     extern crate getopts;
     use getopts::Options;
 
-    type Result<T> = ::std::result::Result<T, Box<dyn error::Error>>;
+    type Result<T> = result::Result<T, Box<dyn error::Error>>;
     type Sequence = (f64, f64, f64, usize);
 
     pub fn run(out: &mut dyn Write, argv: Vec<String>) -> Result<()> {
@@ -22,8 +23,10 @@ mod seq {
             Ok(m) => m,
             Err(f) => return Err(f.to_string().into()),
         };
-        let seq =
-            getseq(&matches.free).or(Err(opts.short_usage("seq") + " [first [incr]] last"))?;
+        let seq = match getseq(&matches.free) {
+            Ok(s) => s,
+            Err(e) => return Err(usage(opts, Err(e)).into()),
+        };
         let sep = matches.opt_str("s").unwrap_or("\n".to_string());
         let width = if matches.opt_present("w") {
             cmp::max(
@@ -36,6 +39,14 @@ mod seq {
 
         emitseq(out, seq, &sep, width, matches.opt_str("t"))?;
         Ok(())
+    }
+
+    fn usage(opts: Options, err: Result<()>) -> String {
+        let usage = opts.short_usage("seq") + " [first [incr]] last";
+        if let Err(e) = err {
+            return format!("{}\n{}", e, usage);
+        }
+        usage
     }
 
     fn options() -> Options {
