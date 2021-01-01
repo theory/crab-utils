@@ -17,11 +17,18 @@ mod seq {
     type Result<T> = result::Result<T, Box<dyn error::Error>>;
     type Sequence = (f64, f64, f64, usize);
 
+    macro_rules! usage {
+        () => {
+            "Usage: seq [-w] [-s string] [-t string] [first [incr]] last"
+        };
+    }
     pub fn run(out: &mut dyn Write, argv: Vec<String>) -> Result<()> {
         let opts = options();
-        let matches = opts.parse(argv).or_else(|e| Err(e))?;
-        let seq = getseq(&matches.free)?;
+        let matches = opts
+            .parse(argv)
+            .or_else(|e| Err(e.to_string() + "\n" + usage!()))?;
 
+        let seq = getseq(&matches.free)?;
         let sep = matches.opt_str("s").unwrap_or("\n".to_string());
         let width = if matches.opt_present("w") {
             cmp::max(
@@ -80,7 +87,7 @@ mod seq {
                 }
                 s
             }
-            _ => return Err("Usage: seq [-w] [-s string] [-t string] [first [incr]] last".into()),
+            _ => return Err(usage!().into()),
         };
 
         // Set the default increment.
@@ -109,18 +116,15 @@ mod seq {
     ) -> Result<()> {
         let mut cur = seq.0;
         let mut iter = 0isize;
-        if seq.0 <= seq.2 {
-            while cur <= seq.2 {
-                write!(out, "{:0>1$.2$}{3}", cur, width, seq.3, sep)?;
-                iter += 1;
-                cur = seq.0 + seq.1 * iter as f64;
-            }
+
+        while if seq.0 <= seq.2 {
+            cur <= seq.2
         } else {
-            while cur >= seq.2 {
-                write!(out, "{:0>1$.2$}{3}", cur, width, seq.3, sep)?;
-                iter += 1;
-                cur = seq.0 + seq.1 * iter as f64;
-            }
+            cur >= seq.2
+        } {
+            write!(out, "{:0>1$.2$}{3}", cur, width, seq.3, sep)?;
+            iter += 1;
+            cur = seq.0 + seq.1 * iter as f64;
         }
 
         if let Some(term) = term {
