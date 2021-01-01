@@ -105,22 +105,18 @@ mod seq {
 
     fn emitseq(
         out: &mut dyn Write,
-        seq: Sequence,
+        s: Sequence,
         sep: &str,
         width: usize,
         term: Option<String>,
     ) -> Result<()> {
-        let mut cur = seq.0;
+        let mut cur = s.0;
         let mut iter = 0isize;
 
-        while if seq.0 <= seq.2 {
-            cur <= seq.2
-        } else {
-            cur >= seq.2
-        } {
-            write!(out, "{:0>1$.2$}{3}", cur, width, seq.3, sep)?;
+        while if s.0 <= s.2 { cur <= s.2 } else { cur >= s.2 } {
+            write!(out, "{:0>1$.2$}{3}", cur, width, s.3, sep)?;
             iter += 1;
-            cur = seq.0 + seq.1 * iter as f64;
+            cur = s.0 + s.1 * iter as f64;
         }
 
         if let Some(term) = term {
