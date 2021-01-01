@@ -66,15 +66,17 @@ mod seq {
 
                 // Make sure the increment is valid.
                 if s.1 == 0.0 {
-                    return Err(
-                        format!("zero {}crement", if s.0 < s.2 { "in" } else { "de" }).into(),
-                    );
+                    return Err(format!(
+                        "seq: zero {}crement",
+                        if s.0 < s.2 { "in" } else { "de" }
+                    )
+                    .into());
                 }
                 if s.1 <= 0.0 && s.0 < s.2 {
-                    return Err("needs positive increment".into());
+                    return Err("seq: needs positive increment".into());
                 }
                 if s.1 >= 0.0 && s.0 > s.2 {
-                    return Err("needs negative decrement".into());
+                    return Err("seq: needs negative decrement".into());
                 }
                 s
             }
@@ -372,22 +374,22 @@ mod seq {
                 TestCase {
                     desc: "zero increment".into(),
                     args: vec!["1".into(), "0".into(), "5".into()],
-                    err: "zero increment".into(),
+                    err: "seq: zero increment".into(),
                 },
                 TestCase {
                     desc: "zero decrement".into(),
                     args: vec!["1".into(), "0".into(), "-5".into()],
-                    err: "zero decrement".into(),
+                    err: "seq: zero decrement".into(),
                 },
                 TestCase {
                     desc: "positive increment".into(),
                     args: vec!["1".into(), "-1".into(), "5".into()],
-                    err: "needs positive increment".into(),
+                    err: "seq: needs positive increment".into(),
                 },
                 TestCase {
                     desc: "negative decrement".into(),
                     args: vec!["1".into(), "1".into(), "-5".into()],
-                    err: "needs negative decrement".into(),
+                    err: "seq: needs negative decrement".into(),
                 },
                 TestCase {
                     desc: "invalid float".into(),
