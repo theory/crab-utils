@@ -3,7 +3,7 @@ use std::{env, process};
 
 fn main() {
     if let Err(err) = seq::run(&mut stdout(), env::args().skip(1).collect()) {
-        eprintln!("seq: {}", err);
+        eprintln!("{}", err);
         process::exit(2);
     }
 }
@@ -36,14 +36,6 @@ mod seq {
         Ok(())
     }
 
-    // fn usage(opts: Options, err: Result<()>) -> String {
-    //     let usage = opts.short_usage("seq") + " [first [incr]] last";
-    //     if let Err(e) = err {
-    //         return format!("{}\n{}", e, usage);
-    //     }
-    //     usage
-    // }
-
     fn options() -> Options {
         let mut opts = Options::new();
         opts.optflag("w", "equal-width", " Equalize the widths of all numbers");
@@ -59,9 +51,9 @@ mod seq {
 
     macro_rules! float {
         ($x:expr) => {
-            $x.trim()
-                .parse()
-                .or(Err("invalid floating point argument: ".to_string() + &$x))?
+            $x.trim().parse().or(Err(
+                "seq: invalid floating point argument: ".to_string() + &$x
+            ))?
         };
     }
 
@@ -86,8 +78,7 @@ mod seq {
                 }
                 s
             }
-            0 => return Err("Not enough arguments".into()),
-            _ => return Err("Too many arguments".into()),
+            _ => return Err("Usage: seq [-w] [-s string] [-t string] [first [incr]] last".into()),
         };
 
         // Set the default increment.
@@ -371,12 +362,12 @@ mod seq {
                 TestCase {
                     desc: "no args".into(),
                     args: vec![],
-                    err: "Not enough arguments".into(),
+                    err: "Usage: seq [-w] [-s string] [-t string] [first [incr]] last".into(),
                 },
                 TestCase {
                     desc: "too many args".into(),
                     args: vec!["x".into(); 4],
-                    err: "Too many arguments".into(),
+                    err: "Usage: seq [-w] [-s string] [-t string] [first [incr]] last".into(),
                 },
                 TestCase {
                     desc: "zero increment".into(),
@@ -401,17 +392,17 @@ mod seq {
                 TestCase {
                     desc: "invalid float".into(),
                     args: vec!["x".into()],
-                    err: "invalid floating point argument: x".into(),
+                    err: "seq: invalid floating point argument: x".into(),
                 },
                 TestCase {
                     desc: "invalid float 2".into(),
                     args: vec!["1".into(), "y".into()],
-                    err: "invalid floating point argument: y".into(),
+                    err: "seq: invalid floating point argument: y".into(),
                 },
                 TestCase {
                     desc: "invalid float 3".into(),
                     args: vec!["1".into(), "1".into(), "⚽️".into()],
-                    err: "invalid floating point argument: ⚽️".into(),
+                    err: "seq: invalid floating point argument: ⚽️".into(),
                 },
             ] {
                 match getseq(&item.args) {
