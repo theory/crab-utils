@@ -62,17 +62,20 @@ mod seq {
         opts
     }
 
+    macro_rules! float {
+        ($x:expr) => {
+            $x.trim().parse().or(Err(
+                "seq: invalid floating point argument: ".to_string() + &$x
+            ))?
+        };
+    }
+
     fn getseq(args: &Vec<String>) -> Result<Sequence> {
         let mut seq: Sequence = match args.len() {
-            1 => (1.0, 0.0, args[0].trim().parse()?, 0),
-            2 => (args[0].trim().parse()?, 0.0, args[1].trim().parse()?, 0),
+            1 => (1.0, 0.0, float!(args[0]), 0),
+            2 => (float!(args[0]), 0.0, float!(args[1]), 0),
             3 => {
-                let s: Sequence = (
-                    args[0].trim().parse()?,
-                    args[1].trim().parse()?,
-                    args[2].trim().parse()?,
-                    0,
-                );
+                let s: Sequence = (float!(args[0]), float!(args[1]), float!(args[2]), 0);
 
                 // Make sure the increment is valid.
                 if s.1 == 0.0 {
