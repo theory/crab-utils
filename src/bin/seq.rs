@@ -33,19 +33,15 @@ mod seq {
     }
 
     pub fn run(out: &mut dyn Write, argv: Vec<String>) -> Result<()> {
-        let mats = options()
+        let opt = options()
             .parse(argv)
             .or_else(|e| Err(e.to_string() + "\n" + usage!()))?;
 
-        let seq = getseq(&mats.free)?;
-        let sep = mats.opt_str("s").unwrap_or("\n".to_string());
-        let width = if mats.opt_present("w") {
-            width!(seq)
-        } else {
-            1
-        };
+        let seq = getseq(&opt.free)?;
+        let sep = opt.opt_str("s").unwrap_or("\n".to_string());
+        let width = if opt.opt_present("w") { width!(seq) } else { 1 };
 
-        emitseq(out, seq, &sep, width, mats.opt_str("t"))
+        emitseq(out, seq, &sep, width, opt.opt_str("t"))
     }
 
     fn options() -> Options {
