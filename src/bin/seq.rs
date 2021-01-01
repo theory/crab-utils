@@ -22,25 +22,30 @@ mod seq {
             "Usage: seq [-w] [-s string] [-t string] [first [incr]] last"
         };
     }
+
+    macro_rules! width {
+        ($x:expr) => {
+            cmp::max(
+                format!("{0:.1$}", $x.0, $x.3).len(),
+                format!("{0:.1$}", $x.2, $x.3).len(),
+            )
+        };
+    }
+
     pub fn run(out: &mut dyn Write, argv: Vec<String>) -> Result<()> {
-        let opts = options();
-        let matches = opts
+        let mats = options()
             .parse(argv)
             .or_else(|e| Err(e.to_string() + "\n" + usage!()))?;
 
-        let seq = getseq(&matches.free)?;
-        let sep = matches.opt_str("s").unwrap_or("\n".to_string());
-        let width = if matches.opt_present("w") {
-            cmp::max(
-                format!("{0:.1$}", seq.0, seq.3).len(),
-                format!("{0:.1$}", seq.2, seq.3).len(),
-            )
+        let seq = getseq(&mats.free)?;
+        let sep = mats.opt_str("s").unwrap_or("\n".to_string());
+        let width = if mats.opt_present("w") {
+            width!(seq)
         } else {
             1
         };
 
-        emitseq(out, seq, &sep, width, matches.opt_str("t"))?;
-        Ok(())
+        emitseq(out, seq, &sep, width, mats.opt_str("t"))
     }
 
     fn options() -> Options {
@@ -136,6 +141,63 @@ mod seq {
     #[cfg(test)]
     mod tests {
         use super::*;
+
+        #[test]
+        fn test_usage() {
+            assert_eq!(
+                usage!(),
+                "Usage: seq [-w] [-s string] [-t string] [first [incr]] last",
+            );
+        }
+
+        #[test]
+        fn test_width() {
+            struct TestCase<'a> {
+                desc: &'a str,
+                seq: Sequence,
+                exp: usize,
+            }
+            for item in vec![
+                TestCase {
+                    desc: "one",
+                    seq: (1.0, 1.0, 1.0, 0),
+                    exp: 1,
+                },
+                TestCase {
+                    desc: "two",
+                    seq: (1.0, 1.0, 10.0, 0),
+                    exp: 2,
+                },
+                TestCase {
+                    desc: "three",
+                    seq: (100.0, 1.0, 10.0, 0),
+                    exp: 3,
+                },
+                TestCase {
+                    desc: "one.one",
+                    seq: (1.0, 1.0, 1.0, 1),
+                    exp: 3,
+                },
+                TestCase {
+                    desc: "one.two",
+                    seq: (1.0, 1.0, 1.0, 2),
+                    exp: 4,
+                },
+                TestCase {
+                    desc: "two.two",
+                    seq: (1.0, 10.0, 1.0, 2),
+                    exp: 4,
+                },
+            ] {
+                assert_eq!(
+                    width!(item.seq),
+                    item.exp,
+                    "Failed testing width {}",
+                    item.desc
+                );
+            }
+        }
+
         #[test]
         fn test_options() -> Result<()> {
             struct TestCase<'a> {
