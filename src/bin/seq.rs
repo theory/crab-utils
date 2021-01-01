@@ -3,7 +3,7 @@ use std::{env, process};
 
 fn main() {
     if let Err(err) = seq::run(&mut stdout(), env::args().skip(1).collect()) {
-        eprintln!("{}", err);
+        eprintln!("seq: {}", err);
         process::exit(2);
     }
 }
@@ -23,10 +23,8 @@ mod seq {
             Ok(m) => m,
             Err(f) => return Err(f.to_string().into()),
         };
-        let seq = match getseq(&matches.free) {
-            Ok(s) => s,
-            Err(e) => return Err(usage(opts, Err(e)).into()),
-        };
+        let seq = getseq(&matches.free)?;
+
         let sep = matches.opt_str("s").unwrap_or("\n".to_string());
         let width = if matches.opt_present("w") {
             cmp::max(
@@ -41,13 +39,13 @@ mod seq {
         Ok(())
     }
 
-    fn usage(opts: Options, err: Result<()>) -> String {
-        let usage = opts.short_usage("seq") + " [first [incr]] last";
-        if let Err(e) = err {
-            return format!("{}\n{}", e, usage);
-        }
-        usage
-    }
+    // fn usage(opts: Options, err: Result<()>) -> String {
+    //     let usage = opts.short_usage("seq") + " [first [incr]] last";
+    //     if let Err(e) = err {
+    //         return format!("{}\n{}", e, usage);
+    //     }
+    //     usage
+    // }
 
     fn options() -> Options {
         let mut opts = Options::new();
@@ -64,9 +62,9 @@ mod seq {
 
     macro_rules! float {
         ($x:expr) => {
-            $x.trim().parse().or(Err(
-                "seq: invalid floating point argument: ".to_string() + &$x
-            ))?
+            $x.trim()
+                .parse()
+                .or(Err("invalid floating point argument: ".to_string() + &$x))?
         };
     }
 
@@ -402,6 +400,21 @@ mod seq {
                     desc: "negative decrement".into(),
                     args: vec!["1".into(), "1".into(), "-5".into()],
                     err: "needs negative decrement".into(),
+                },
+                TestCase {
+                    desc: "invalid float".into(),
+                    args: vec!["x".into()],
+                    err: "invalid floating point argument: x".into(),
+                },
+                TestCase {
+                    desc: "invalid float 2".into(),
+                    args: vec!["1".into(), "y".into()],
+                    err: "invalid floating point argument: y".into(),
+                },
+                TestCase {
+                    desc: "invalid float 3".into(),
+                    args: vec!["1".into(), "1".into(), "⚽️".into()],
+                    err: "invalid floating point argument: ⚽️".into(),
                 },
             ] {
                 match getseq(&item.args) {
