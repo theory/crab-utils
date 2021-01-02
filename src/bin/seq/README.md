@@ -24,20 +24,20 @@ Normally integer values are printed as decimal integers.
 
 The seq utility accepts the following options:
 
-> ### `-s	string`
-> 
-> Use string to separate numbers. The default is \n.
-> 
-> ### `-t	string`
-> 
-> Use string to terminate sequence of numbers. This option is useful when the
-> separator does not contain a newline.
-> 
-> ### `-w`
-> 
-> Equalize the widths of all numbers by padding with zeros as necessary. 
+*   `-s	string`
 
-The seq utility exits 0 onsuccess and non-zero if an error occurs.
+    Use string to separate numbers. The default is \n.
+
+*   `-t	string`
+
+    Use string to terminate sequence of numbers. This option is useful when the
+    separator does not contain a newline.
+
+*   `-w`
+
+    Equalize the widths of all numbers by padding with zeros as necessary.
+
+The seq utility exits 0 on success and non-zero if an error occurs.
 
 Examples
 --------
