@@ -1,6 +1,5 @@
 use getopts::Options;
-use std::io::Write;
-use std::{cmp, error, result, str};
+use std::{cmp, error, io::Write, result, str};
 
 type Result<T> = result::Result<T, Box<dyn error::Error>>;
 type Sequence = (f64, f64, f64, usize);
