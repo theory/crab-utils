@@ -19,7 +19,7 @@ macro_rules! width {
     };
 }
 
-pub fn run(out: &mut dyn Write, argv: Vec<String>) -> Result<()> {
+pub fn run(out: &mut dyn Write, argv: &[String]) -> Result<()> {
     let opt = options()
         .parse(argv)
         .or_else(|e| Err(e.to_string() + "\n" + usage!()))?;
@@ -47,7 +47,7 @@ macro_rules! float {
     };
 }
 
-fn getseq(args: &Vec<String>) -> Result<Sequence> {
+fn getseq(args: &[String]) -> Result<Sequence> {
     let mut seq: Sequence = match args.len() {
         1 => (1.0, 0.0, float!(args[0]), 0),
         2 => (float!(args[0]), 0.0, float!(args[1]), 0),
