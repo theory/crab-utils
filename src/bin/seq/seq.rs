@@ -28,7 +28,7 @@ pub fn run(out: &mut dyn Write, argv: &[String]) -> Result<()> {
     let sep = opt.opt_str("s").unwrap_or("\n".to_string());
     let width = if opt.opt_present("w") { width!(seq) } else { 1 };
 
-    emitseq(out, seq, &sep, width, opt.opt_str("t"))
+    emitseq(out, &seq, &sep, width, &opt.opt_str("t"))
 }
 
 fn options() -> Options {
@@ -90,10 +90,10 @@ fn getseq(args: &[String]) -> Result<Sequence> {
 
 fn emitseq(
     out: &mut dyn Write,
-    s: Sequence,
+    s: &Sequence,
     sep: &str,
     width: usize,
-    term: Option<String>,
+    term: &Option<String>,
 ) -> Result<()> {
     let mut cur = s.0;
     let mut iter = 0isize;

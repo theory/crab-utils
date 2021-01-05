@@ -540,7 +540,7 @@ fn test_emitseq_run() -> Result<()> {
             },
         ] {
             let mut buf: Vec<u8> = vec![];
-            emitseq(&mut buf, item.seq, item.sep, item.width, item.term)?;
+            emitseq(&mut buf, &item.seq, item.sep, item.width, &item.term)?;
             assert_eq!(
                 item.exp,
                 String::from_utf8(buf).unwrap(),
