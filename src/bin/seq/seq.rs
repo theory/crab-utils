@@ -19,7 +19,7 @@ macro_rules! width {
     };
 }
 
-pub fn run(out: &mut dyn Write, argv: &[String]) -> Result<()> {
+pub fn run(out: &mut impl Write, argv: &[String]) -> Result<()> {
     let opt = options()
         .parse(argv)
         .or_else(|e| Err(e.to_string() + "\n" + usage!()))?;
@@ -89,7 +89,7 @@ fn getseq(args: &[String]) -> Result<Sequence> {
 }
 
 fn emitseq(
-    out: &mut dyn Write,
+    out: &mut impl Write,
     s: &Sequence,
     sep: &str,
     width: usize,
